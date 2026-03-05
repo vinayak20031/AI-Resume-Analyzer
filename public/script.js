@@ -1,4 +1,4 @@
-// -------------------- REGISTER --------------------
+
 async function register() {
     const name = document.getElementById("name").value;
     const email = document.getElementById("email").value;
@@ -24,7 +24,7 @@ async function register() {
     }
 }
 
-// -------------------- LOGIN --------------------
+
 async function login() {
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
@@ -55,7 +55,7 @@ async function login() {
     }
 }
 
-// -------------------- UPLOAD RESUME --------------------
+
 async function uploadResume() {
     const file = document.getElementById("resumeFile").files[0];
 
@@ -86,7 +86,7 @@ async function uploadResume() {
         document.getElementById("result").innerText =
             data.analysis || data.message || "No analysis returned";
 
-        // Refresh history automatically
+      
         loadHistory();
     } catch (err) {
         console.error(err);
@@ -94,7 +94,7 @@ async function uploadResume() {
     }
 }
 
-// -------------------- LOAD HISTORY --------------------
+
 async function loadHistory() {
     const token = localStorage.getItem("token");
     if (!token) return;

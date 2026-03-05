@@ -10,7 +10,7 @@ const connectDB = require("./config/db");
 const auth = require("./middleware/authMiddleware");
 const Resume = require("./models/Resume");
 
-const MAX_LENGTH = 10000; // max chars to send to AI
+const MAX_LENGTH = 10000; 
 
 connectDB();
 
@@ -19,10 +19,9 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/api/auth", require("./routes/authRoutes"));
 
-// ---------------- GEMINI SETUP ----------------
+
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// ---------------- FILE UPLOAD SETUP ----------------
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         if (!fs.existsSync("uploads")) fs.mkdirSync("uploads");
@@ -32,12 +31,10 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// ---------------- HELPER FUNCTIONS ----------------
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// ---------------- AI FUNCTION WITH MULTIPLE MODELS & RETRIES ----------------
 async function generateWithFallback(prompt) {
     const models = [
         "gemini-3.1-flash-lite-preview",
@@ -48,57 +45,57 @@ async function generateWithFallback(prompt) {
     for (const modelName of models) {
         let retries = 0;
 
-        while (retries < 5) { // retry 5 times on rate limit
+        while (retries < 5) { 
             try {
-                console.log(`🤖 Trying model: ${modelName}, attempt ${retries + 1}`);
+                console.log(`Trying model: ${modelName}, attempt ${retries + 1}`);
                 const response = await ai.models.generateContent({
                     model: modelName,
                     contents: [{ role: "user", parts: [{ text: prompt }] }]
                 });
 
                 if (response.text) {
-                    console.log("✅ AI response generated successfully!");
+                    console.log(" AI response generated successfully!");
                     return response.text;
                 }
 
             } catch (error) {
-                if (error.status === 429) { // Rate limit
+                if (error.status === 429) { 
                     retries++;
-                    const waitTime = 10000; // 10 seconds
-                    console.log(`⏳ Rate limit hit for ${modelName}. Waiting ${waitTime / 1000}s before retry...`);
+                    const waitTime = 10000; 
+                    console.log(` Rate limit hit for ${modelName}. Waiting ${waitTime / 1000}s before retry...`);
                     await sleep(waitTime);
                     continue;
-                } else if (error.status === 503) { // Model overload
-                    console.log(`⚠️ Model ${modelName} overloaded. Trying next model...`);
+                } else if (error.status === 503) { 
+                    console.log(` Model ${modelName} overloaded. Trying next model...`);
                     break;
-                } else if (error.status === 404) { // Model not found
-                    console.log(`⚠️ Model ${modelName} not found. Skipping...`);
+                } else if (error.status === 404) { 
+                    console.log(` Model ${modelName} not found. Skipping...`);
                     break;
                 }
-                console.log(`⚠️ Model ${modelName} failed with error:`, error.message);
+                console.log(`Model ${modelName} failed with error:`, error.message);
                 break;
             }
         }
 
-        console.log(`⛔ Moving to next model after ${retries} retries: ${modelName}`);
+        console.log(` Moving to next model after ${retries} retries: ${modelName}`);
     }
 
     return "AI analysis failed. Please try again later.";
 }
 
-// ---------------- RESUME UPLOAD ----------------
+
 app.post("/upload", auth, upload.single("resume"), async (req, res) => {
     if (!req.file) return res.status(400).json({ message: "No file uploaded" });
 
     try {
-        console.log("📂 Resume received:", req.file.originalname);
+        console.log(" Resume received:", req.file.originalname);
 
         const fileBuffer = fs.readFileSync(req.file.path);
         const data = await pdf(fileBuffer);
 
-        // Truncate long resumes to MAX_LENGTH
+      
         const extractedText = data.text.substring(0, MAX_LENGTH);
-        console.log("📝 PDF text extracted. Length:", extractedText.length);
+        console.log(" PDF text extracted. Length:", extractedText.length);
 
         const prompt = `
 You are an expert ATS resume reviewer.
@@ -124,7 +121,6 @@ ${extractedText}`;
         console.log(aiAnalysis);
         console.log("-----------------------------------------");
 
-        // Save analysis to MongoDB
         await Resume.create({
             userId: req.user.id,
             analysis: aiAnalysis
@@ -144,7 +140,7 @@ ${extractedText}`;
     }
 });
 
-// ---------------- HISTORY ----------------
+
 app.get("/history", auth, async (req, res) => {
     try {
         const history = await Resume.find({ userId: req.user.id }).sort({ createdAt: -1 });
@@ -154,7 +150,6 @@ app.get("/history", auth, async (req, res) => {
     }
 });
 
-// ---------------- SERVER START ----------------
 app.listen(process.env.PORT, () => {
     console.log(`🚀 Server running on http://localhost:${process.env.PORT}`);
 });
