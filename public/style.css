@@ -1,0 +1,26 @@
+body {
+    font-family: Arial;
+    background: #f4f4f4;
+    display: flex;
+    justify-content: center;
+    margin-top: 50px;
+}
+
+.container {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    width: 400px;
+}
+
+button {
+    padding: 8px;
+    margin-top: 10px;
+    width: 100%;
+}
+
+input {
+    width: 100%;
+    padding: 8px;
+    margin-top: 10px;
+}
